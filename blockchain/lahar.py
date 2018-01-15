@@ -39,12 +39,6 @@ class Lahar:
     def Hash(lahar):
         return hashlib.sha256(json.dumps(lahar,sort_keys=True).encode()).digest()
         
-    def hash_transactions(self):
-        tran_hash=''
-        for transaction in self.transactions:
-            tran_hash += hashlib.sha256(json.dumps(transaction,sort_keys=True).encode()).digest()
-        
-        return hashlib.sha256(tran_hash)
     
     def proof_of_work(self):
         '''
@@ -56,13 +50,19 @@ class Lahar:
         while True:
             prev_hash=self.last_lahar['previous_hash']
             
-            hash = hashlib.sha256(prev_hash+self.hash_transactions()+str(proof)).digest()
-            if hash[:4]=="0000":
+            if Lahar.validate_pow(prev_hash,self.transactions,proof) == True:
                 break
+            
             proof += 1
         
         return proof
     
     @staticmethod
-    def validate_pow():
+    def validate_pow(prev_hash,current_transactions,proof):
+        tran_hash=''
+        for transaction in current_transactions:
+            tran_hash += hashlib.sha256(json.dumps(transaction,sort_keys=True).encode()).digest()
         
+        tran_hash=hashlib.sha256(tran_hash)
+        hash = hashlib.sha256(prev_hash+tran_hash+str(proof)).digest()
+        return hash[:4]=='0000'
