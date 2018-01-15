@@ -39,17 +39,30 @@ class Lahar:
     def Hash(lahar):
         return hashlib.sha256(json.dumps(lahar,sort_keys=True).encode()).digest()
         
+    def hash_transactions(self):
+        tran_hash=''
+        for transaction in self.transactions:
+            tran_hash += hashlib.sha256(json.dumps(transaction,sort_keys=True).encode()).digest()
+        
+        return hashlib.sha256(tran_hash)
     
     def proof_of_work(self):
         '''
-        '' find a number P such that hash(lastBlock|p) has 4 leading zeroes
+        '' find a nonce such that hash(lastBlock.hash|transaction|nonce) has 4 leading zeroes
+        '' in real implementation they use Merkle Tree for hashing transactions
+        '' in our implementation, we shall hash all transactions together
         '''
         proof = 0
         while True:
-            hash = hashlib.sha256(json.dumps(self.last_lahar,sort_keys=True).encode()+str(proof)).digest()
+            prev_hash=self.last_lahar['previous_hash']
+            
+            hash = hashlib.sha256(prev_hash+self.hash_transactions()+str(proof)).digest()
             if hash[:4]=="0000":
                 break
             proof += 1
         
         return proof
     
+    @staticmethod
+    def validate_pow():
+        
